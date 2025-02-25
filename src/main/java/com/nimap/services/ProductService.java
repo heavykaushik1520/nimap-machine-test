@@ -1,8 +1,11 @@
 package com.nimap.services;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -26,6 +29,24 @@ public class ProductService {
 	private ResponseWrapper responseWrapper;
 
 	private final static int PAGE_SIZE = 5;
+
+	public ResponseEntity<?> getAllProductByPageNo(int page) {
+		Pageable pageable = PageRequest.of(page, PAGE_SIZE, Sort.by("id").ascending());
+		Page<Product> products = productRepository.findAll(pageable);
+		if (page <= 0) {
+			responseWrapper.setMessage("Bad Request");
+			responseWrapper.setData(null);
+			return new ResponseEntity<>(responseWrapper, HttpStatus.BAD_REQUEST);
+		} else if (products.isEmpty()) {
+			responseWrapper.setMessage("No products");
+			responseWrapper.setData(null);
+			return new ResponseEntity<>(responseWrapper, HttpStatus.OK);
+		} else {
+			responseWrapper.setMessage("Products");
+			responseWrapper.setData(products.getContent());
+			return new ResponseEntity<>(responseWrapper, HttpStatus.OK);
+		}
+	}
 
 	public ResponseEntity<?> createProduct(Product product) {
 		Category category = categoryRepository.findById(product.getCategory().getId())
@@ -70,19 +91,18 @@ public class ProductService {
 
 		return new ResponseEntity<>(responseWrapper, HttpStatus.OK);
 	}
-	
-	public ResponseEntity<?> deleteProductById(int id){
+
+	public ResponseEntity<?> deleteProductById(int id) {
 		Product foundProduct = productRepository.findById(id).orElseThrow(
 				() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "No product found with id : " + id));
-		
-		productRepository.deleteById(id);
-		
-		 responseWrapper.setMessage("Product successfully deleted");
-	     responseWrapper.setData(null);
-	     
-	     return new ResponseEntity<>(responseWrapper , HttpStatus.OK);
 
-		
+		productRepository.deleteById(id);
+
+		responseWrapper.setMessage("Product successfully deleted");
+		responseWrapper.setData(null);
+
+		return new ResponseEntity<>(responseWrapper, HttpStatus.OK);
+
 	}
 
 }

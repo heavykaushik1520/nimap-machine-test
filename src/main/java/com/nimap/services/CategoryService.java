@@ -2,6 +2,7 @@ package com.nimap.services;
 
 import org.springframework.beans.factory.annotation.Autowired;
 
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -71,6 +72,13 @@ public class CategoryService {
 	public ResponseEntity<?> getCategories(int page) {
 		Pageable pageable = PageRequest.of(page, DEFAULT_PAGE_SIZE, Sort.by("id").ascending());
 		Page<Category> categoryPage = categoryRepository.findAll(pageable);
+		
+		if (page <= 0) {
+			responseWrapper.setMessage("No page at this number");
+			responseWrapper.setData(null);
+			return new ResponseEntity<>(responseWrapper, HttpStatus.BAD_REQUEST);
+		}
+		
 		if (categoryPage.isEmpty()) {
 			responseWrapper.setMessage("No categories found for the specified page");
 			responseWrapper.setData(null);
